@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import event_card %}
+{% block title %}Events{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="page-head">
+    <div><h1>Hey {{ session.student_name.split(' ')[0] }}, pick your next event</h1></div>
+    <a class="btn" href="{{ url_for('student_profile') }}">View my progress</a>
+  </div>
+
+  <div class="card xp-banner">
+    <span class="lvl">{{ level.icon }} Level {{ level.no }}: {{ level.name }}</span>
+    <div class="bar xp"><span data-w="{{ level.pct }}"></span></div>
+    <span><b>{{ xp }} XP</b>{% if level.next %} <span class="muted small">{{ level.to_next }} to {{ level.next }}</span>{% endif %}</span>
+  </div>
+
+  {% if undo_item %}
+  <div class="undo">
+    <span>You cancelled <b>{{ undo_item.title }}</b>. Want it back?</span>
+    <form method="post" action="{{ url_for('undo_cancel') }}"><button class="btn btn-sm btn-dark">Undo cancel</button></form>
+  </div>
+  {% endif %}
+
+  <form method="get" class="toolbar">
+    <div class="search-box field">
+      <label for="search">Search events</label>
+      <input id="search" name="q" value="{{ q }}" placeholder="Try a title or a category" autocomplete="off">
+      <div id="suggest" class="suggest" hidden></div>
+    </div>
+    <div class="field"><label for="from">Starting from</label><input id="from" type="date" name="from" value="{{ from_day }}"></div>
+    <button class="btn btn-dark">Search</button>
+    {% if q or from_day %}<a class="btn" href="{{ url_for('student_dashboard') }}">Clear</a>{% endif %}
+  </form>
+
+  <div class="chips" role="group" aria-label="Filter by category">
+    <button type="button" class="filter-chip on" data-filter="all">All</button>
+    {% for c in ['technical','cultural','sports','workshop','literary','other'] %}
+      <button type="button" class="filter-chip" data-filter="{{ c }}">{{ c|capitalize }}</button>
+    {% endfor %}
+  </div>
+
+  {% if events %}
+    <div class="grid">{% for e in events %}{{ event_card(e, 'student') }}{% endfor %}</div>
+  {% else %}
+    <div class="card empty"><h3>No events match</h3><p class="muted">Try a different search, or clear the filters to see everything that is coming up.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

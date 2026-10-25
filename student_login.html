@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Student login{% endblock %}
+{% block content %}
+<section class="auth card">
+  <h1>Welcome back</h1>
+  <p class="muted">Log in with your college email to register for events and track your progress.</p>
+  <form method="post">
+    <div class="field"><label for="email">College email</label><input id="email" type="email" name="email" placeholder="name@{{ college_domain }}" required autofocus></div>
+    <div class="field"><label for="password">Password</label><input id="password" type="password" name="password" required></div>
+    <button class="btn btn-primary btn-block">Log in</button>
+  </form>
+  <p class="auth-alt muted">New here? <a href="{{ url_for('student_signup') }}">Create your account</a><br>Admin? <a href="{{ url_for('admin_login') }}">Admin login</a></p>
+</section>
+{% endblock %}

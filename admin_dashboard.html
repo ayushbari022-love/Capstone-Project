@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Admin dashboard{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="page-head">
+    <h1>Event control room</h1>
+    <a class="btn btn-primary" href="{{ url_for('admin_event_new') }}">＋ Add new event</a>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat hot"><b>{{ stats.upcoming }}</b><span>upcoming events</span></div>
+    <div class="stat"><b>{{ stats.events }}</b><span>events in total</span></div>
+    <div class="stat"><b>{{ stats.students }}</b><span>students</span></div>
+    <div class="stat"><b>{{ stats.registrations }}</b><span>registrations</span></div>
+    <div class="stat"><b>{{ stats.winners }}</b><span>winners declared</span></div>
+    <div class="stat {% if stats.pending_payments %}warn{% endif %}"><b>{{ stats.pending_payments }}</b><span>payments to verify</span></div>
+  </div>
+
+  <h2>All events</h2>
+  {% if events %}
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Event</th><th>When</th><th>Venue</th><th>Seats / teams</th><th>Status</th><th>Manage</th></tr></thead>
+      <tbody>
+      {% for e in events %}
+        <tr>
+          <td><b>{{ e.title }}</b><br>
+            <span class="chip">{{ e.category }}</span>
+            {% if e.is_team_event %}<span class="chip team">👥 {{ e.team_size }}</span>{% endif %}
+            {% if e.requires_payment %}<span class="chip fee">{{ e.fee_amount|inr }}</span>{% endif %}
+          </td>
+          <td>{{ e.event_date|dfmt }}<br><span class="muted small">{{ e.event_time|t12 }}</span></td>
+          <td>{{ e.venue }}</td>
+          <td>{{ e.confirmed }} / {{ e.capacity }} {{ 'teams' if e.is_team_event else 'seats' }}{% if e.waitlisted %}<br><span class="muted small">{{ e.waitlisted }} waiting</span>{% endif %}</td>
+          <td>{% if e.event_date >= today %}<span class="tag ok">Upcoming</span>{% else %}<span class="tag done">Completed</span>{% endif %}</td>
+          <td><div class="actions">
+            <a class="btn btn-sm" href="{{ url_for('admin_registrations', event_id=e.event_id) }}">Registrations</a>
+            <a class="btn btn-sm" href="{{ url_for('admin_event_edit', event_id=e.event_id) }}">Edit</a>
+            <form method="post" action="{{ url_for('admin_event_delete', event_id=e.event_id) }}" onsubmit="return confirm('Delete this event? Its registrations and results will be removed too.')">
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </div></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="card empty"><h3>No events yet</h3><p class="muted">Add your first event so students can start registering.</p>
+      <a class="btn btn-primary" href="{{ url_for('admin_event_new') }}">Add an event</a></div>
+  {% endif %}
+</section>
+{% endblock %}

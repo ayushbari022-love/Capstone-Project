@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Leaderboard{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="page-head"><h1>XP leaderboard</h1>
+    <p class="muted" style="margin:0;max-width:44ch">Points come from registering, showing up and finishing on the podium.</p></div>
+
+  {% if rows %}
+    {% if rows|length >= 3 %}
+    <div class="podium">
+      {% for i in [1, 0, 2] %}
+        {% set r = rows[i] %}
+        <div class="pod p{{ i + 1 }}"><span class="ico">{{ ['🥇','🥈','🥉'][i] }}</span><b>{{ r.name }}</b><span class="small">{{ r.department }}</span><br><b>{{ r.xp }} XP</b></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="card table-wrap">
+      <table>
+        <thead><tr><th>Rank</th><th>Student</th><th>Department</th><th>Level</th><th>XP</th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr><td><b>#{{ r.rank }}</b></td><td>{{ r.name }}</td><td>{{ r.department }}, Year {{ r.study_year }}</td><td>{{ r.level.icon }} {{ r.level.name }}</td><td><b>{{ r.xp }}</b></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="card empty"><h3>No XP earned yet</h3><p class="muted">Register for an event to get on the board.</p>
+      <a class="btn btn-primary" href="{{ url_for('student_login') }}">Get started</a></div>
+  {% endif %}
+</section>
+{% endblock %}

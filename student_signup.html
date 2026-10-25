@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Create account{% endblock %}
+{% block content %}
+<section class="auth card">
+  <h1>Join EventRegister</h1>
+  <p class="muted">Only college emails ending in <b>@{{ college_domain }}</b> can register. If you plan to join a team event, your teammates need an account here too.</p>
+  <form method="post">
+    <div class="field"><label for="name">Full name</label><input id="name" name="name" value="{{ form.get('name','') }}" required autofocus></div>
+    <div class="field"><label for="email">College email</label><input id="email" type="email" name="email" value="{{ form.get('email','') }}" placeholder="name@{{ college_domain }}" required></div>
+    <div class="row">
+      <div class="field"><label for="department">Department</label>
+        <select id="department" name="department" required>
+          <option value="">Choose</option>
+          {% for d in departments %}<option {{ 'selected' if form.get('department') == d }}>{{ d }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label for="study_year">Year</label>
+        <select id="study_year" name="study_year" required>
+          <option value="">Choose</option>
+          {% for y in ['1','2','3','4'] %}<option value="{{ y }}" {{ 'selected' if form.get('study_year') == y }}>Year {{ y }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <div class="field"><label for="phone">Phone (optional)</label><input id="phone" name="phone" value="{{ form.get('phone','') }}" maxlength="15"></div>
+    <div class="row">
+      <div class="field"><label for="password">Password</label><input id="password" type="password" name="password" minlength="6" required></div>
+      <div class="field"><label for="confirm">Confirm password</label><input id="confirm" type="password" name="confirm" minlength="6" required></div>
+    </div>
+    <button class="btn btn-primary btn-block">Create account</button>
+  </form>
+  <p class="auth-alt muted">Already registered? <a href="{{ url_for('student_login') }}">Log in</a></p>
+</section>
+{% endblock %}

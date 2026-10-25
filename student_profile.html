@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}My progress{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="page-head">
+    <div class="profile-head">
+      <div class="avatar">{{ me.name[0]|upper }}</div>
+      <div>
+        <h1>{{ me.name }}</h1>
+        <p class="muted" style="margin:.3rem 0 0">{{ me.email }}, {{ me.department }}, Year {{ me.study_year }}</p>
+      </div>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('student_dashboard') }}">Browse events</a>
+  </div>
+
+  <div class="profile-grid">
+    <div class="stack">
+
+      <div class="card">
+        <span class="lvl">{{ p.level.icon }} Level {{ p.level.no }}: {{ p.level.name }}</span>
+        <div style="display:flex;align-items:baseline;gap:.6rem;margin:1rem 0 .6rem"><span class="big-xp">{{ p.xp }}</span><span class="muted">XP earned</span></div>
+        <div class="bar xp"><span data-w="{{ p.level.pct }}"></span></div>
+        <p class="small muted" style="margin-top:.5rem">{% if p.level.next %}{{ p.level.to_next }} XP to reach {{ p.level.next }}.{% else %}You reached the top level. Legend status unlocked.{% endif %}</p>
+        <div class="stat-grid four" style="margin:1rem 0 0">
+          <div class="stat"><b>{{ p.regs|length }}</b><span>registrations</span></div>
+          <div class="stat"><b>{{ p.attended }}</b><span>attended</span></div>
+          <div class="stat"><b>{{ p.wins|length }}</b><span>podium finishes</span></div>
+          <div class="stat hot"><b>#{{ p.rank }}</b><span>of {{ p.total_students }} students</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Badges</h3>
+        <div class="badge-grid">
+          {% for b in p.badges %}
+            <div class="badge {{ '' if b.earned else 'locked' }}"><span class="ico">{{ b.icon }}</span><b>{{ b.name }}</b><small>{{ b.desc }}</small></div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>My upcoming registrations</h3>
+        {% if p.upcoming %}
+        <ul class="timeline">
+          {% for r in p.upcoming %}
+          <li>
+            <span>
+              <b>{{ r.title }}</b>{% if r.team_name %} <span class="chip team">{{ r.team_name }}</span>{% endif %}<br>
+              <span class="muted small">{{ r.event_date|dfmt }}, {{ r.event_time|t12 }}, {{ r.venue }}</span>
+              {% if r.payment_status and r.payment_status != 'not_required' %}<br><span class="tag {{ r.payment_status }}" style="margin-top:.3rem">Payment: {{ r.payment_status|replace('_',' ')|capitalize }}</span>{% endif %}
+            </span>
+            <span class="actions">
+              {% if r.status == 'waitlisted' %}<span class="tag wait">Waitlist #{{ r.wait_pos }}</span>{% else %}<span class="tag ok">Confirmed</span>{% endif %}
+              {% if not r.team_id or r.leader_id == me.student_id %}
+              <form method="post" action="{{ url_for('cancel_registration', event_id=r.event_id) }}" onsubmit="return confirm('Cancel this registration?')">
+                <input type="hidden" name="next" value="profile">
+                <button class="btn btn-sm btn-danger">Cancel</button>
+              </form>
+              {% endif %}
+            </span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+          <div class="empty"><h3>Nothing booked</h3><p class="muted">Pick an event and it will show up here.</p><a class="btn btn-primary" href="{{ url_for('student_dashboard') }}">Find events</a></div>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <h3>Past events</h3>
+        {% if p.past %}
+        <ul class="timeline">
+          {% for r in p.past %}
+          <li>
+            <span><b>{{ r.title }}</b>{% if r.team_name %} <span class="chip team">{{ r.team_name }}</span>{% endif %}<br><span class="muted small">{{ r.event_date|dfmt }}, {{ r.category }}</span></span>
+            <span class="actions">
+              {% if r.win %}<span class="tag ok">{{ r.win.place|medal }}</span><a class="btn btn-sm" href="{{ url_for('certificate', result_id=r.win.result_id) }}">Certificate</a>
+              {% elif r.attended %}<span class="tag done">Attended</span>
+              {% elif r.status == 'waitlisted' %}<span class="tag wait">Waitlisted</span>
+              {% else %}<span class="tag">Did not attend</span>{% endif %}
+            </span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}<p class="muted">Your completed events will be listed here.</p>{% endif %}
+      </div>
+    </div>
+
+    <form method="post" class="card">
+      <h3>Edit profile</h3>
+      <div class="field"><label for="name">Full name</label><input id="name" name="name" value="{{ me.name }}" required></div>
+      <div class="field"><label>College email</label><input value="{{ me.email }}" disabled></div>
+      <div class="field"><label for="department">Department</label>
+        <select id="department" name="department">{% for d in departments %}<option {{ 'selected' if me.department == d }}>{{ d }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="study_year">Year</label>
+        <select id="study_year" name="study_year">{% for y in [1,2,3,4] %}<option value="{{ y }}" {{ 'selected' if me.study_year == y }}>Year {{ y }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" value="{{ me.phone or '' }}" maxlength="15"></div>
+      <h3 style="margin-top:1.4rem">Change password</h3>
+      <div class="field"><label for="current_password">Current password</label><input id="current_password" type="password" name="current_password"></div>
+      <div class="field"><label for="new_password">New password</label><input id="new_password" type="password" name="new_password" minlength="6"><span class="hint">Leave both blank to keep your password.</span></div>
+      <button class="btn btn-dark btn-block">Save changes</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

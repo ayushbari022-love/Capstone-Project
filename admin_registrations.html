@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Registrations{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="page-head">
+    <div>
+      <a class="small" href="{{ url_for('admin_dashboard') }}">Back to events</a>
+      <h1>{{ ev.title }}</h1>
+      <p class="muted" style="margin:.4rem 0 0">
+        {{ ev.event_date|dfmt }} at {{ ev.event_time|t12 }}, {{ ev.venue }}.
+        {{ ev.confirmed }} of {{ ev.capacity }} {{ 'teams' if ev.is_team_event else 'seats' }} filled, {{ ev.waitlisted }} on waitlist.
+        {% if ev.is_team_event %} Teams of {{ ev.team_size }}.{% endif %}
+        {% if ev.requires_payment %} Fee {{ ev.fee_amount|inr }} per {{ 'team' if ev.is_team_event else 'student' }}.{% endif %}
+      </p>
+    </div>
+    <a class="btn btn-sm" href="{{ url_for('admin_event_edit', event_id=ev.event_id) }}">Edit event</a>
+  </div>
+
+  <h2>{{ 'Registered teams' if ev.is_team_event else 'Registered students' }}</h2>
+  {% if groups %}
+    {% for g in groups %}
+    <div class="team-card">
+      <div class="thead">
+        <div>
+          {% if ev.is_team_event %}<b>{{ g.team_name }}</b><span class="muted small"> · {{ g.members|length }} members</span>
+          {% else %}<b>{{ g.members[0].name }}</b><span class="muted small"> · {{ g.members[0].department }}, Year {{ g.members[0].study_year }}</span>{% endif %}
+        </div>
+        <div class="actions">
+          <span class="tag {{ 'ok' if g.status == 'confirmed' else 'wait' }}">{{ g.status|capitalize }}</span>
+          {% if ev.requires_payment %}
+            <span class="tag {{ g.payment_status }}">Payment: {{ g.payment_status|replace('_', ' ')|capitalize }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if ev.is_team_event %}
+        {% for m in g.members %}
+        <div class="member-row">
+          <span>{{ m.name }} {% if g.leader_id == m.student_id %}<span class="chip">Leader</span>{% endif %} <span class="muted small">{{ m.department }}, Year {{ m.study_year }}</span></span>
+          <span class="actions">
+            {% if g.status == 'confirmed' %}
+            <form method="post" action="{{ url_for('admin_toggle_attend', reg_id=m.reg_id) }}">
+              <button class="btn btn-sm {{ 'btn-primary' if m.attended }}">{{ 'Attended' if m.attended else 'Mark attended' }}</button>
+            </form>
+            {% else %}<span class="muted small">Waiting for a slot</span>{% endif %}
+          </span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="member-row">
+          <span>{{ g.members[0].email }}</span>
+          <span class="actions">
+            {% if g.status == 'confirmed' %}
+            <form method="post" action="{{ url_for('admin_toggle_attend', reg_id=g.members[0].reg_id) }}">
+              <button class="btn btn-sm {{ 'btn-primary' if g.members[0].attended }}">{{ 'Attended' if g.members[0].attended else 'Mark attended' }}</button>
+            </form>
+            {% else %}<span class="muted small">Waiting for a seat</span>{% endif %}
+          </span>
+        </div>
+      {% endif %}
+
+      {% if ev.requires_payment %}
+      <div class="member-row">
+        <span class="small">
+          {% if g.payment_ref %}Ref: <b>{{ g.payment_ref }}</b>{% endif %}
+          {% if g.payment_proof_path %}{% if g.payment_ref %} · {% endif %}<a href="{{ url_for('static', filename=g.payment_proof_path) }}" target="_blank" rel="noopener">View payment screenshot</a>{% endif %}
+          {% if g.paid_amount %} · {{ g.paid_amount|inr }}{% endif %}
+        </span>
+        {% if g.payment_status == 'pending' %}
+        <span class="actions">
+          <form method="post" action="{{ url_for('admin_payment_action', action='verify', kind='team' if ev.is_team_event else 'reg', obj_id=g.team_id if ev.is_team_event else g.members[0].reg_id) }}">
+            <button class="btn btn-sm btn-primary">Verify payment</button>
+          </form>
+          <form method="post" action="{{ url_for('admin_payment_action', action='reject', kind='team' if ev.is_team_event else 'reg', obj_id=g.team_id if ev.is_team_event else g.members[0].reg_id) }}" onsubmit="return confirm('Reject this payment? The registration will be removed and the slot released.')">
+            <button class="btn btn-sm btn-danger">Reject</button>
+          </form>
+        </span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div class="member-row">
+        <span class="muted small">Registered {{ g.registered_at.strftime('%d %b, %I:%M %p') }}</span>
+        <form method="post" action="{{ url_for('admin_remove_registration', reg_id=g.members[0].reg_id) }}" onsubmit="return confirm('Remove this {{ 'team' if ev.is_team_event else 'registration' }}?')">
+          <button class="btn btn-sm btn-danger">Remove {{ 'team' if ev.is_team_event else '' }}</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="card empty"><h3>No registrations yet</h3><p class="muted">{{ 'Teams' if ev.is_team_event else 'Students' }} will show up here as soon as they register.</p></div>
+  {% endif %}
+
+  <div class="section">
+    <h2>Declare winners</h2>
+    {% if ev.event_date > today %}
+      <div class="card"><p class="muted" style="margin:0">Winners can be declared on the event day or later ({{ ev.event_date|dfmt }}).</p></div>
+    {% elif ev.is_team_event and not team_choices %}
+      <div class="card"><p class="muted" style="margin:0">No confirmed teams to pick from.</p></div>
+    {% elif not ev.is_team_event and not groups %}
+      <div class="card"><p class="muted" style="margin:0">Nobody registered, so there is nobody to pick.</p></div>
+    {% else %}
+      <form method="post" action="{{ url_for('admin_set_winners', event_id=ev.event_id) }}" class="card">
+        <div class="row">
+          {% for pos, label in [(1, '🥇 1st place'), (2, '🥈 2nd place'), (3, '🥉 3rd place')] %}
+          <div class="field"><label for="p{{ pos }}">{{ label }}</label>
+            <select id="p{{ pos }}" name="p{{ pos }}">
+              <option value="">None</option>
+              {% if ev.is_team_event %}
+                {% for t in team_choices %}<option value="{{ t.team_id }}" {{ 'selected' if winners.get(pos) in (t.members|map(attribute='student_id')|list) }}>{{ t.label }}</option>{% endfor %}
+              {% else %}
+                {% for g in groups if g.status == 'confirmed' %}
+                  {% set m = g.members[0] %}
+                  <option value="{{ m.student_id }}" {{ 'selected' if winners.get(pos) == m.student_id }}>{{ m.name }} ({{ m.department }})</option>
+                {% endfor %}
+              {% endif %}
+            </select></div>
+          {% endfor %}
+        </div>
+        <p class="hint">{{ 'Every member of the winning team earns bonus XP and a certificate.' if ev.is_team_event else 'Winners earn bonus XP and a downloadable certificate on their profile.' }} Saving again replaces the previous result.</p>
+        <button class="btn btn-primary">Save results</button>
+      </form>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

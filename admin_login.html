@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Admin login{% endblock %}
+{% block content %}
+<section class="auth card">
+  <h1>Admin login</h1>
+  <p class="muted">Manage events, verify payments, see who registered and publish results.</p>
+  <form method="post">
+    <div class="field"><label for="username">Username</label><input id="username" name="username" required autofocus></div>
+    <div class="field"><label for="password">Password</label><input id="password" type="password" name="password" required></div>
+    <button class="btn btn-dark btn-block">Log in as admin</button>
+  </form>
+  <p class="auth-alt muted">Are you a student? <a href="{{ url_for('student_login') }}">Student login</a></p>
+</section>
+{% endblock %}

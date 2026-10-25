@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Register - {{ ev.title }}{% endblock %}
+{% block content %}
+<section class="container" style="max-width:720px">
+  <div class="page-head">
+    <div>
+      <a class="small" href="{{ url_for('student_dashboard') }}">Back to events</a>
+      <h1>{{ ev.title }}</h1>
+      <p class="muted" style="margin:.4rem 0 0">{{ ev.event_date|dfmt }} at {{ ev.event_time|t12 }}, {{ ev.venue }}</p>
+    </div>
+  </div>
+
+  <form method="post" class="card" enctype="multipart/form-data">
+    {% if ev.is_team_event %}
+      <h3>Team details</h3>
+      <p class="hint" style="margin-top:-.6rem">This event needs teams of exactly <b>{{ ev.team_size }}</b>. You register as the team leader - just enter your teammates' college emails, they don't need to do anything themselves.</p>
+      <div class="field"><label for="team_name">Team name</label>
+        <input id="team_name" name="team_name" value="{{ form.get('team_name','') }}" required></div>
+      <div class="field">
+        <label for="teammates">Teammates' college emails ({{ ev.team_size - 1 }} needed, not counting you)</label>
+        <textarea id="teammates" name="teammates" data-need="{{ ev.team_size - 1 }}" placeholder="one.student@{{ college_domain }}, two.student@{{ college_domain }}">{{ form.get('teammates','') }}</textarea>
+        <span class="hint" id="teammates-hint">Separate emails with a comma or a new line. Each teammate must already have an EventRegister account.</span>
+      </div>
+    {% endif %}
+
+    {% if ev.requires_payment %}
+      <h3>{{ 'Team payment' if ev.is_team_event else 'Payment' }}</h3>
+      <div class="pay-box">
+        <div class="qr-wrap">
+          {% if ev.qr_image_path %}<img src="{{ url_for('static', filename=ev.qr_image_path) }}" alt="Scan to pay for {{ ev.title }}">{% else %}<p class="muted">No QR uploaded yet - contact the admin.</p>{% endif %}
+          <p class="fee-amount">{{ ev.fee_amount|inr }}<span class="small muted" style="font-weight:500"> / {{ 'team' if ev.is_team_event else 'student' }}</span></p>
+          <p class="hint">Scan this QR with any UPI app and pay, then fill in the proof below.</p>
+        </div>
+        <div class="row">
+          <div class="field"><label for="payment_ref">Transaction / UPI reference</label>
+            <input id="payment_ref" name="payment_ref" value="{{ form.get('payment_ref','') }}" placeholder="e.g. UPI Ref No."></div>
+          <div class="field"><label for="proof">Payment screenshot</label>
+            <input id="proof" type="file" name="proof" accept="image/png,image/jpeg,image/webp"></div>
+        </div>
+        <p class="hint" style="margin-top:-.6rem">Give at least one of the two. Your seat is held right away and confirmed once the admin verifies the payment from their dashboard.</p>
+      </div>
+    {% endif %}
+
+    <button class="btn btn-primary btn-block" style="margin-top:1rem">
+      {% if ev.is_team_event and ev.requires_payment %}Pay and register team
+      {% elif ev.is_team_event %}Register team
+      {% else %}Pay and register{% endif %}
+    </button>
+  </form>
+</section>
+{% endblock %}

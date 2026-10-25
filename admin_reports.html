@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Winner reports{% endblock %}
+{% block content %}
+<section class="container">
+  <div class="page-head"><h1>Winner reports</h1>
+    <a class="btn btn-primary" href="{{ url_for('admin_reports_export', event_id=sel_event, department=sel_dept) }}">Download CSV</a></div>
+
+  <form method="get" class="card toolbar">
+    <div class="field" style="flex:1 1 240px"><label for="event_id">Event</label>
+      <select id="event_id" name="event_id">
+        <option value="">All events</option>
+        {% for e in events %}<option value="{{ e.event_id }}" {{ 'selected' if sel_event == e.event_id }}>{{ e.title }}</option>{% endfor %}
+      </select></div>
+    <div class="field" style="flex:1 1 240px"><label for="department">Department</label>
+      <select id="department" name="department">
+        <option value="">All departments</option>
+        {% for d in departments %}<option {{ 'selected' if sel_dept == d.department }}>{{ d.department }}</option>{% endfor %}
+      </select></div>
+    <button class="btn btn-dark">Apply filters</button>
+    <a class="btn" href="{{ url_for('admin_reports') }}">Clear</a>
+  </form>
+
+  <div class="card table-wrap" style="margin-top:1.6rem">
+    <table>
+      <thead><tr><th>Event</th><th>Date</th><th>Position</th><th>Student</th><th>Department</th></tr></thead>
+      <tbody>
+      {% for w in winners %}
+        <tr>
+          <td><b>{{ w.title }}</b><br><span class="chip">{{ w.category }}</span></td>
+          <td>{{ w.event_date|dfmt }}</td>
+          <td><b>{{ w.place|medal }}</b></td>
+          <td>{{ w.name }}<br><span class="muted small">{{ w.email }}</span></td>
+          <td>{{ w.department }}<br><span class="muted small">Year {{ w.study_year }}</span></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="empty"><h3>No winners for this filter</h3><p class="muted">Open an event's registrations and use Declare winners to publish results.</p></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two section">
+    <div class="card">
+      <h3>Registrations and attendance by event</h3>
+      <div class="bars">
+        {% set biggest = (by_event|map(attribute='total')|max) if by_event else 1 %}
+        {% for r in by_event %}
+          <div class="line"><span title="{{ r.title }}">{{ r.title }}</span>
+            <div class="bar blue"><span data-w="{{ ((r.total / (biggest or 1)) * 100)|round|int }}"></span></div>
+            <span>{{ r.total }}</span></div>
+          <div class="line"><span class="muted small">attended</span>
+            <div class="bar"><span data-w="{{ ((r.attended|int / (r.total or 1)) * 100)|round|int }}"></span></div>
+            <span class="muted small">{{ r.attended|int }}</span></div>
+        {% else %}<p class="muted">No events yet.</p>{% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <h3>Podium finishes by department</h3>
+      <div class="bars">
+        {% set most = (by_dept|map(attribute='wins')|max) if by_dept else 1 %}
+        {% for d in by_dept %}
+          <div class="line"><span title="{{ d.department }}">{{ d.department }}</span>
+            <div class="bar pink"><span data-w="{{ ((d.wins / (most or 1)) * 100)|round|int }}"></span></div><span>{{ d.wins }}</span></div>
+        {% else %}<p class="muted">No results published yet.</p>{% endfor %}
+      </div>
+      <h3 style="margin-top:1.8rem">Top XP earners</h3>
+      <ul class="timeline">
+        {% for t in top %}<li><span>{{ loop.index }}. {{ t.name }} <span class="muted small">{{ t.department }}</span></span><b>{{ t.xp }} XP</b></li>
+        {% else %}<li class="muted">Nobody has earned XP yet.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %}

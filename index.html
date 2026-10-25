@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import event_card %}
+{% block content %}
+<section class="container hero">
+  <div>
+    <h1>Find the event. Take the seat. Earn the badge.</h1>
+    <p class="lead">The SJCEM event board: register solo or as a team, pay by QR when an event needs it, and watch your XP grow with every event you show up to.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="{{ url_for('student_signup') }}">Create student account</a>
+      <a class="btn" href="{{ url_for('student_login') }}">I already have one</a>
+    </div>
+  </div>
+
+  {% if hero %}
+    <div class="hero-ticket">
+      {{ event_card(hero, None, True) }}
+      <div class="countdown" data-countdown="{{ hero.iso }}" aria-label="Time until {{ hero.title }}">
+        <div><b data-u="d">00</b><small>days</small></div>
+        <div><b data-u="h">00</b><small>hours</small></div>
+        <div><b data-u="m">00</b><small>minutes</small></div>
+        <div><b data-u="s">00</b><small>seconds</small></div>
+      </div>
+      <p class="small muted">Until the next event starts.</p>
+    </div>
+  {% else %}
+    <div class="card empty hero-ticket">
+      <h3>No events on the board yet</h3>
+      <p class="muted">The admin has not published anything. Check back soon.</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="container">
+  <div class="strip">
+    <div><b>{{ counts.events }}</b>upcoming events</div>
+    <div><b>{{ counts.students }}</b>students joined</div>
+    <div><b>{{ counts.registrations }}</b>registrations</div>
+    <div><b>{{ counts.winners }}</b>podium finishes</div>
+  </div>
+</section>
+
+<section class="container section" id="events">
+  <h2>Upcoming events</h2>
+  {% if events %}
+    <div class="grid">{% for e in events %}{{ event_card(e) }}{% endfor %}</div>
+  {% else %}
+    <div class="card empty"><h3>Nothing scheduled</h3><p class="muted">New events will appear here as soon as the admin adds them.</p></div>
+  {% endif %}
+</section>
+
+<section class="container section">
+  <h2>What makes EventRegister different</h2>
+  <div class="card how">
+    <div><span class="ico">🏆</span><h3>XP, levels and badges</h3><p class="muted">Every registration, every event you attend and every podium finish earns XP. Climb from Rookie to Legend.</p></div>
+    <div><span class="ico">👥</span><h3>Team registration</h3><p class="muted">One teammate registers for the whole squad - add emails, pick a team name, and everyone is in together.</p></div>
+    <div><span class="ico">💳</span><h3>Pay by QR</h3><p class="muted">Paid events show the admin's QR code. Scan, pay, enter your reference - the admin verifies it from their dashboard.</p></div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit event' if mode == 'edit' else 'New event' }}{% endblock %}
+{% block content %}
+<section class="container" style="max-width:760px">
+  <div class="page-head"><h1>{{ 'Edit event' if mode == 'edit' else 'Add a new event' }}</h1>
+    <a class="btn btn-sm" href="{{ url_for('admin_dashboard') }}">Back to events</a></div>
+  <form method="post" class="card" enctype="multipart/form-data">
+    <div class="field"><label for="title">Event title</label><input id="title" name="title" value="{{ ev.get('title','') }}" required></div>
+    <div class="row">
+      <div class="field"><label for="category">Category</label>
+        <select id="category" name="category" required>
+          {% for c in categories %}<option {{ 'selected' if ev.get('category') == c }}>{{ c }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label for="venue">Venue</label><input id="venue" name="venue" value="{{ ev.get('venue','') }}" required></div>
+    </div>
+    <div class="field"><label for="description">Description</label><textarea id="description" name="description">{{ ev.get('description') or '' }}</textarea></div>
+    <div class="row">
+      <div class="field"><label for="event_date">Date</label><input id="event_date" type="date" name="event_date" value="{{ ev.get('event_date','') }}" required></div>
+      <div class="field"><label for="event_time">Start time</label><input id="event_time" type="time" name="event_time" value="{{ ev.get('event_time','')|hhmm }}" required></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="capacity">{{ 'Team slots' if ev.get('is_team_event') else 'Seats' }}</label><input id="capacity" type="number" min="1" name="capacity" value="{{ ev.get('capacity', 100) }}" required>
+        <span class="hint">When this fills up, new registrations join a waitlist.</span></div>
+      <div class="field"><label for="points">XP for attending</label><input id="points" type="number" min="0" name="points" value="{{ ev.get('points', 50) }}" required>
+        <span class="hint">Awarded per student when you mark them as attended.</span></div>
+    </div>
+
+    <label class="check-row"><input type="checkbox" id="is_team_event" name="is_team_event" {{ 'checked' if ev.get('is_team_event') }}> This is a team event</label>
+    <div id="team-box" class="toggle-box">
+      <div class="field" style="margin-bottom:0"><label for="team_size">Team size</label>
+        <select id="team_size" name="team_size">
+          {% for n in range(min_team, max_team + 1) %}<option value="{{ n }}" {{ 'selected' if ev.get('team_size') == n }}>{{ n }} members per team</option>{% endfor %}
+        </select>
+        <span class="hint">Any one member can register the whole team by entering their teammates' college emails. "Seats" above then counts teams, not students.</span></div>
+    </div>
+
+    <label class="check-row"><input type="checkbox" id="requires_payment" name="requires_payment" {{ 'checked' if ev.get('requires_payment') }}> This event needs a registration fee</label>
+    <div id="pay-box" class="toggle-box">
+      <div class="row">
+        <div class="field"><label for="fee_amount">Fee per {{ 'team' if ev.get('is_team_event') else 'student' }} (₹)</label>
+          <input id="fee_amount" type="number" min="1" step="0.01" name="fee_amount" value="{{ ev.get('fee_amount') or '' }}"></div>
+        <div class="field"><label for="qr_image">Payment QR code</label><input id="qr_image" type="file" name="qr_image" accept="image/png,image/jpeg,image/webp">
+          {% if ev.get('qr_image_path') %}<span class="hint">Current QR is saved. Upload a new image only if you want to replace it.</span>{% endif %}</div>
+      </div>
+      {% if ev.get('qr_image_path') %}<img src="{{ url_for('static', filename=ev['qr_image_path']) }}" alt="Current payment QR" style="max-width:140px;border:2px solid var(--ink);border-radius:10px;background:#fff;padding:.3rem">{% endif %}
+      <p class="hint" style="margin-top:.6rem">Students scan this to pay, then enter a transaction reference or upload a screenshot. Their seat is held right away; verify the payment from the event's Registrations page afterwards.</p>
+    </div>
+
+    <button class="btn btn-primary">{{ 'Save changes' if mode == 'edit' else 'Publish event' }}</button>
+  </form>
+</section>
+{% endblock %}

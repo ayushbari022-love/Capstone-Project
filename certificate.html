@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Certificate{% endblock %}
+{% block content %}
+<div class="container no-print" style="margin-top:1.5rem;display:flex;gap:.6rem;justify-content:flex-end">
+  <a class="btn btn-sm" href="{{ url_for('student_profile') }}">Back to profile</a>
+  <button class="btn btn-sm btn-primary" onclick="window.print()">Print or save as PDF</button>
+</div>
+<section class="cert">
+  <p class="muted">SJCEM, EventRegister Event Hub</p>
+  <h1>Certificate of Achievement</h1>
+  <p>This certificate is proudly presented to</p>
+  <div class="name">{{ c.name }}</div>
+  <p>of {{ c.department }}</p>
+  <div class="place">{{ ['','🥇','🥈','🥉'][c.place] }}</div>
+  <h3>{{ c.place|medal }} place in {{ c.title }}</h3>
+  <p class="muted">{{ c.category }} event held on {{ c.event_date|dfmt }}</p>
+</section>
+{% endblock %}

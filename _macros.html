@@ -1,0 +1,65 @@
+{# One event = one ticket. role: None (visitor) | 'student' #}
+{% macro event_card(e, role=None, hero=False) %}
+{% set left = e.capacity - e.confirmed %}
+{% set pct = ([(e.confirmed / e.capacity * 100) if e.capacity else 0, 100]|min)|round|int %}
+{% set unit = 'team' if e.is_team_event else 'seat' %}
+<article class="ticket {% if hero %}ticket-hero{% endif %} cat-{{ e.category|lower }}" data-cat="{{ e.category|lower }}">
+  <div class="stub">
+    <span class="day">{{ e.event_date.strftime('%d') }}</span>
+    <span class="mon">{{ e.event_date.strftime('%b') }}</span>
+    <span class="yr">{{ e.event_date.strftime('%Y') }}</span>
+    <span class="tm">{{ e.event_time|t12 }}</span>
+  </div>
+  <div class="tbody">
+    <div class="trow">
+      <span class="chip">{{ e.category }}</span>
+      <div class="badges">
+        {% if e.is_team_event %}<span class="chip team">👥 Team of {{ e.team_size }}</span>{% endif %}
+        {% if e.requires_payment %}<span class="chip fee">{{ e.fee_amount|inr }}</span>{% endif %}
+        <span class="xp-pill">+{{ e.points }} XP</span>
+      </div>
+    </div>
+    <h3>{{ e.title }}</h3>
+    {% if e.description %}<p class="muted">{{ e.description|truncate(hero and 160 or 100) }}</p>{% endif %}
+    <p class="where">📍 {{ e.venue }}</p>
+    <div class="seats">
+      <div class="bar"><span data-w="{{ pct }}"></span></div>
+      <small>
+        {% if left > 0 %}{{ left }} of {{ e.capacity }} {{ unit }}{{ 's' if e.capacity != 1 }} left{% else %}Full{% endif %}
+        {% if e.waitlisted %}, {{ e.waitlisted }} {{ unit }}{{ 's' if e.waitlisted != 1 }} on waitlist{% endif %}
+      </small>
+    </div>
+    {% if role == 'student' %}
+      {% if e.my_status == 'confirmed' %}
+        <div class="actions" style="justify-content:space-between">
+          <span class="tag ok">{{ "Team registered" if e.is_team_event else "You're registered" }}</span>
+          {% if not e.is_team_event or e.i_am_leader %}
+          <form method="post" action="{{ url_for('cancel_registration', event_id=e.event_id) }}" onsubmit="return confirm('Cancel this registration for {{ e.title|replace("'", "") }}?')">
+            <button class="btn btn-sm btn-danger">Cancel</button>
+          </form>
+          {% endif %}
+        </div>
+      {% elif e.my_status == 'waitlisted' %}
+        <div class="actions" style="justify-content:space-between">
+          <span class="tag wait">Waitlist #{{ e.wait_pos }}</span>
+          {% if not e.is_team_event or e.i_am_leader %}
+          <form method="post" action="{{ url_for('cancel_registration', event_id=e.event_id) }}" onsubmit="return confirm('Leave the waitlist?')">
+            <button class="btn btn-sm btn-danger">Leave</button>
+          </form>
+          {% endif %}
+        </div>
+      {% elif e.is_team_event or e.requires_payment %}
+        <a class="btn btn-block {% if left > 0 %}btn-primary{% else %}btn-orange{% endif %}" href="{{ url_for('event_register', event_id=e.event_id) }}">
+          {% if left > 0 %}{{ 'Register your team' if e.is_team_event else 'Pay and register' }}{% else %}Join waitlist{% endif %}
+        </a>
+      {% else %}
+        <form method="post" action="{{ url_for('register_event', event_id=e.event_id) }}">
+          <button class="btn btn-block {% if left > 0 %}btn-primary{% else %}btn-orange{% endif %}">{% if left > 0 %}Register{% else %}Join waitlist{% endif %}</button>
+        </form>
+      {% endif %}
+    {% else %}
+      <a class="btn btn-block btn-primary" href="{{ url_for('student_login') }}">Log in to register</a>
+    {% endif %}
+  </div>
+</article>
+{% endmacro %}

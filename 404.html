@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Not found{% endblock %}
+{% block content %}
+<section class="auth card empty">
+  <h1>Page not found</h1>
+  <p class="muted">That page does not exist or was removed.</p>
+  <a class="btn btn-primary" href="{{ url_for('home') }}">Back to the event board</a>
+</section>
+{% endblock %}
